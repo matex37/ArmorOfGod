@@ -1,0 +1,6 @@
+WIDTH = 960
+HEIGHT = 540
+FPS = 60
+
+TITLE = "Armor of God"
+BG_COLOR = (25, 25, 35)
