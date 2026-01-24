@@ -21,12 +21,14 @@ class Player:
         self.anim_frame = 0
         self.anim_speed = 0.15
         self.prev_state = self.state
+        self.sliding = False
 
         self.animations = {
             "idle": self.load_images("assets/player/idle"),
             "run": self.load_images("assets/player/run"),
             "jump": self.load_images("assets/player/jump"),
             "attack": self.load_images("assets/player/attack"),
+            "slide": self.load_images("assets/player/slide"),
         }
 
     def load_images(self, folder):
@@ -42,15 +44,20 @@ class Player:
     def handle_input(self):
         keys = pygame.key.get_pressed()
         self.velocity_x = 0
-
+        self.sliding = False
+        # движение влево/вправо
         if keys[pygame.K_LEFT]:
             self.velocity_x = -self.speed
         if keys[pygame.K_RIGHT]:
             self.velocity_x = self.speed
-
+        # прыжок
         if keys[pygame.K_SPACE] and self.on_ground:
             self.velocity_y = self.jump_power
             self.on_ground = False
+        # скольжение
+        if keys[pygame.K_DOWN] and self.on_ground and (keys[pygame.K_LEFT] or keys[pygame.K_RIGHT]):
+            self.sliding = True
+            self.velocity_x *= 0.5  # ускоряем скольжение
 
     def move_x(self, platforms):
         self.rect.x += self.velocity_x
@@ -92,6 +99,8 @@ class Player:
 
         if not self.on_ground:
             self.state = "jump"
+        elif self.sliding:  # проверяем скольжение раньше, чем run
+            self.state = "slide"
         elif keys[pygame.K_f]:
             self.state = "attack"
         elif keys[pygame.K_LEFT] or keys[pygame.K_RIGHT]:
@@ -103,6 +112,7 @@ class Player:
             self.facing = "left"
         elif keys[pygame.K_RIGHT]:
             self.facing = "right"
+
         if self.state != self.prev_state:
             self.anim_frame = 0
             self.prev_state = self.state

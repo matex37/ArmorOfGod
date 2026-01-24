@@ -2,12 +2,10 @@ import pygame
 import sys
 from settings import *
 from entities.player import Player
-from levels.level import Level
 from levels.loader import load_level
 from levels.level import Level
 
 TILE_SIZE = 48
-
 
 class Game:
     def __init__(self):
@@ -27,22 +25,29 @@ class Game:
         # загружаем уровень
         level_map = load_level("levels/maps/level_01.txt")
         self.level = Level(level_map, TILE_SIZE)
-        self.platforms = self.level.platforms
 
         # создаём игрока
         start_x, start_y = self.level.player_start
         self.player = Player(start_x, start_y)
 
         # шипы опасные зоны
-        self.spikes = [
-            pygame.Rect(350, HEIGHT - 20, 40, 10),
-            pygame.Rect(540, 280, 40, 10),
-        ]
+        self.spikes = []
+        for y, row in enumerate(level_map):
+            for x, cell in enumerate(row):
+                world_x = x * TILE_SIZE
+                world_y = y * TILE_SIZE
+                if cell == "^":
+                    self.spikes.append(pygame.Rect(world_x, world_y + TILE_SIZE - 10, TILE_SIZE, 10))
 
         # сокровища
-        self.treasures = [
-            pygame.Rect(415, 50, 20, 20),
-        ]
+        self.treasures = []
+        for y, row in enumerate(level_map):
+            for x, cell in enumerate(row):
+                world_x = x * TILE_SIZE
+                world_y = y * TILE_SIZE
+                if cell == "T":
+                    self.treasures.append(pygame.Rect(world_x + 14, world_y + 14, 20, 20))
+
 
     def run(self):
         while self.running:
@@ -68,9 +73,6 @@ class Game:
         self.score = 0
         self.player.rect.topleft = (100, 100)
 
-        # self.treasures = [
-        #     pygame.Rect(320, 160, 30, 30),
-        # ]
 
     def update_camera(self):
         self.camera_x = self.player.rect.centerx - WIDTH // 2
@@ -84,30 +86,28 @@ class Game:
 
     def update(self):
         if self.state == "PLAY":
-            self.player.update(self.platforms)
+            self.player.update(self.level.platforms)
+            self.level.update()
             self.update_camera()
             self.check_death()
             self.check_treasure()
-        if (
-                not self.level_completed
-                and self.level.exit_rect
-                and self.player.rect.colliderect(self.level.exit_rect)
-        ):
-            self.level_completed = True
-            print("LEVEL COMPLETE")
 
-        if (
-                not self.door_opened
-                and self.level.door_rect
-                and self.player.rect.colliderect(self.level.door_rect)
-        ):
-            self.door_opened = True
-            print("DOOR OPENED")
-        if (
-                self.level.exit_rect
-                and self.player.rect.colliderect(self.level.exit_rect)
-        ):
-            print("LEVEL COMPLETE")
+            if (
+                    self.level.door
+                    and self.player.rect.colliderect(self.level.door.rect)
+            ):
+                self.level.door.open()
+
+            if (
+                    not self.level_completed
+                    and self.level.door
+                    and self.level.door.state == "OPEN"
+                    and self.player.rect.colliderect(self.level.exit_rect)
+            ):
+                self.level_completed = True
+                print("LEVEL COMPLETE")
+
+
 
     def apply_camera(self, rect):
         return pygame.Rect(
@@ -140,29 +140,18 @@ class Game:
         self.screen.blit(start, (WIDTH // 2 - start.get_width() // 2, 260))
 
     def draw_game(self):
-        for platform in self.platforms:
-            pygame.draw.rect(
-                self.screen,
-                (90, 80, 60),
-                self.apply_camera(platform)
-            )
-
-        for spike in self.spikes:
-            pygame.draw.rect(
-                self.screen,
-                (200, 200, 200),
-                self.apply_camera(spike)
-            )
-
-        for treasure in self.treasures:
-            pygame.draw.rect(
-                self.screen,
-                (255, 215, 0),
-                self.apply_camera(treasure)
-            )
         self.level.draw(self.screen, self.camera_x, self.camera_y)
         self.player.draw(self.screen, self.camera_x, self.camera_y)
+        # Рисуем сокровища
+        for treasure in self.treasures:
+            rect = self.apply_camera(treasure)  # применяем камеру
+            pygame.draw.rect(self.screen, (255, 215, 0), rect)
+        # Рисуем шипы
+        for spike in self.spikes:
+            rect = self.apply_camera(spike)  # применяем камеру
+            pygame.draw.rect(self.screen, (255, 255, 255), rect)
         self.draw_hud()
+
 
     def check_death(self):
         for spike in self.spikes:
