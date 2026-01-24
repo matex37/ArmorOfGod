@@ -35,13 +35,13 @@ class Game:
 
         # шипы опасные зоны
         self.spikes = [
-            pygame.Rect(350, HEIGHT - 30, 40, 20),
-            pygame.Rect(540, 280, 40, 20),
+            pygame.Rect(350, HEIGHT - 20, 40, 10),
+            pygame.Rect(540, 280, 40, 10),
         ]
 
         # сокровища
         self.treasures = [
-            pygame.Rect(320, 160, 30, 30),
+            pygame.Rect(415, 50, 20, 20),
         ]
 
     def run(self):
@@ -68,9 +68,9 @@ class Game:
         self.score = 0
         self.player.rect.topleft = (100, 100)
 
-        self.treasures = [
-            pygame.Rect(320, 160, 30, 30),
-        ]
+        # self.treasures = [
+        #     pygame.Rect(320, 160, 30, 30),
+        # ]
 
     def update_camera(self):
         self.camera_x = self.player.rect.centerx - WIDTH // 2
