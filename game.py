@@ -37,8 +37,7 @@ class Game:
                 world_x = x * TILE_SIZE
                 world_y = y * TILE_SIZE
                 if cell == "^":
-                    self.spikes.append(pygame.Rect(world_x, world_y + TILE_SIZE - 10, TILE_SIZE, 10))
-
+                    self.spikes.append(pygame.Rect(world_x, world_y + TILE_SIZE - 5, TILE_SIZE, 5))
         # сокровища
         self.treasures = []
         for y, row in enumerate(level_map):
@@ -47,7 +46,15 @@ class Game:
                 world_y = y * TILE_SIZE
                 if cell == "T":
                     self.treasures.append(pygame.Rect(world_x + 14, world_y + 14, 20, 20))
-
+        # лестница
+        self.ladders = []
+        for y, row in enumerate(level_map):
+            for x, cell in enumerate(row):
+                world_x = x * TILE_SIZE
+                world_y = y * TILE_SIZE
+                if cell == "L":  # символ для L-лестницы
+                    # создаем прямоугольник для лестницы
+                    self.ladders.append(pygame.Rect(world_x, world_y, TILE_SIZE, TILE_SIZE))
 
     def run(self):
         while self.running:
@@ -86,7 +93,7 @@ class Game:
 
     def update(self):
         if self.state == "PLAY":
-            self.player.update(self.level.platforms)
+            self.player.update(self.level.platforms, self.level.ladders)
             self.level.update()
             self.update_camera()
             self.check_death()
@@ -150,9 +157,11 @@ class Game:
         for spike in self.spikes:
             rect = self.apply_camera(spike)  # применяем камеру
             pygame.draw.rect(self.screen, (255, 255, 255), rect)
+        # Рисуем лестницу
+        for ladder in self.ladders:
+            rect = self.apply_camera(ladder)  # применяем камеру
+            pygame.draw.rect(self.screen, (255, 255, 255), rect)
         self.draw_hud()
-
-
     def check_death(self):
         for spike in self.spikes:
             if self.player.rect.colliderect(spike):
@@ -163,7 +172,6 @@ class Game:
             if self.player.rect.colliderect(treasure):
                 self.treasures.remove(treasure)
                 self.score += 1
-
     def respawn(self):
         print("☠ Герой погиб")
         self.player.rect.topleft = (100, 100)

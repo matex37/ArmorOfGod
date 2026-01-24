@@ -15,7 +15,7 @@ class Player:
         self.gravity = 0.8
         self.jump_power = -15
         self.on_ground = False
-
+        self.on_ladder = False  # новый флаг для лестницы
         self.state = "idle"  # idle | run | jump | attack
         self.facing = "right"
         self.anim_frame = 0
@@ -86,10 +86,12 @@ class Player:
                     self.rect.top = platform.bottom
                     self.velocity_y = 0
 
-    def update(self, platforms):
+    def update(self, platforms, ladders):
         self.handle_input()
+        self.handle_ladder(ladders)   # проверка лестницы до движения
         self.move_x(platforms)
-        self.apply_gravity()
+        if not self.on_ladder:        # гравитация только если не на лестнице
+            self.apply_gravity()
         self.move_y(platforms)
         self.update_state()
         self.update_animation()
@@ -154,4 +156,27 @@ class Player:
             image,
             (self.rect.x - camera_x, self.rect.y - camera_y)
         )
+
+    def handle_ladder(self, ladders):
+        keys = pygame.key.get_pressed()
+        self.on_ladder = False
+
+        player_center = self.rect.center
+
+        for ladder in ladders:
+            if ladder.collidepoint(player_center):
+                self.on_ladder = True
+                break
+
+        if self.on_ladder:
+            self.velocity_y = 0
+            self.gravity = 0
+
+            if keys[pygame.K_UP]:
+                self.rect.y -= self.speed
+            elif keys[pygame.K_DOWN]:
+                self.rect.y += self.speed
+        else:
+            self.gravity = 0.8
+
 

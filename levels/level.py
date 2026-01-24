@@ -5,6 +5,7 @@ class Level:
     def __init__(self, level_map, tile_size):
         self.tile_size = tile_size
         self.platforms = []
+        self.ladders = []
         self.door = None
         self.exit_rect = None
         self.player_start = (0, 0)
@@ -26,6 +27,10 @@ class Level:
                     # дверь стоит НАД клеткой выхода
                     self.door = Door(x, y - tile_size, tile_size)
                     self.exit_rect = pygame.Rect(x, y, tile_size, tile_size)
+                elif char == "L":
+                    self.ladders.append(
+                        pygame.Rect(x, y, tile_size, tile_size)
+                    )
     def update(self):
         if self.door:
             self.door.update()
