@@ -90,9 +90,11 @@ class Player:
         self.handle_input()
         self.handle_ladder(ladders)   # проверка лестницы до движения
         self.move_x(platforms)
-        if not self.on_ladder:        # гравитация только если не на лестнице
+        if not self.on_ladder:
             self.apply_gravity()
-        self.move_y(platforms)
+            self.move_y(platforms)
+        else:
+            self.velocity_y = 0
         self.update_state()
         self.update_animation()
 
@@ -170,13 +172,11 @@ class Player:
 
         if self.on_ladder:
             self.velocity_y = 0
-            self.gravity = 0
 
             if keys[pygame.K_UP]:
                 self.rect.y -= self.speed
             elif keys[pygame.K_DOWN]:
                 self.rect.y += self.speed
-        else:
-            self.gravity = 0.8
+
 
 

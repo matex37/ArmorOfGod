@@ -1,5 +1,6 @@
 import pygame
 from entities.door import Door
+from entities.lever import Lever
 
 class Level:
     def __init__(self, level_map, tile_size):
@@ -8,6 +9,7 @@ class Level:
         self.ladders = []
         self.door = None
         self.exit_rect = None
+        self.lever = None
         self.player_start = (0, 0)
 
         for row_index, row in enumerate(level_map):
@@ -31,6 +33,8 @@ class Level:
                     self.ladders.append(
                         pygame.Rect(x, y, tile_size, tile_size)
                     )
+                elif char == "S":
+                    self.lever = Lever(x, y + tile_size // 2, tile_size)
     def update(self):
         if self.door:
             self.door.update()
@@ -46,6 +50,10 @@ class Level:
                     platform.height
                 )
             )
-
+        # дверь
         if self.door:
             self.door.draw(screen, camera_x, camera_y)
+        # рычаг
+        if self.lever:
+            self.lever.draw(screen, camera_x, camera_y)
+
