@@ -1,6 +1,10 @@
 import pygame
 from entities.door import Door
 from entities.lever import Lever
+#images
+wall_image = pygame.image.load("assets/tiles/rock/wall.png")
+cave_bg = pygame.image.load("assets/backgrounds/cave/cave_bg.png")
+
 
 class Level:
     def __init__(self, level_map, tile_size):
@@ -11,6 +15,15 @@ class Level:
         self.exit_rect = None
         self.lever = None
         self.player_start = (0, 0)
+        # стены пещеры
+        self.wall_image = wall_image.convert_alpha()
+        self.wall_image = pygame.transform.scale(
+            self.wall_image, (tile_size, tile_size)
+        )
+        # фон пещеры
+        self.background = cave_bg.convert()
+        self.bg_width = self.background.get_width()
+        self.bg_height = self.background.get_height()
 
         for row_index, row in enumerate(level_map):
             for col_index, char in enumerate(row):
@@ -39,16 +52,25 @@ class Level:
         if self.door:
             self.door.update()
     def draw(self, screen, camera_x, camera_y):
-        for platform in self.platforms:
-            pygame.draw.rect(
-                screen,
-                (90, 80, 60),
-                pygame.Rect(
-                    platform.x - camera_x,
-                    platform.y - camera_y,
-                    platform.width,
-                    platform.height
+        #  фон пещеры
+        bg_x = -camera_x * 0.3
+        bg_y = -camera_y * 0.3
+        # сколько фонов нужно по X и Y, чтобы покрыть экран
+        screen_width, screen_height = screen.get_size()
+        x_repeat = (screen_width // self.bg_width) + 2
+        y_repeat = (screen_height // self.bg_height) + 2
+
+        for x in range(x_repeat):
+            for y in range(y_repeat):
+                screen.blit(
+                    self.background,
+                    (bg_x + x * self.bg_width, bg_y + y * self.bg_height)
                 )
+        # рисуем платформы
+        for platform in self.platforms:
+            screen.blit(
+                self.wall_image,
+                (platform.x - camera_x, platform.y - camera_y)
             )
         # дверь
         if self.door:
