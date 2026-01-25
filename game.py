@@ -4,8 +4,9 @@ from settings import *
 from entities.player import Player
 from levels.loader import load_level
 from levels.level import Level
-
 TILE_SIZE = 48
+# Загружаем уровень
+level_map = load_level("levels/maps/level_01.txt")
 class Game:
     def __init__(self):
         pygame.init()
@@ -21,7 +22,6 @@ class Game:
         self.level_completed = False
 
         # Загружаем уровень
-        level_map = load_level("levels/maps/level_01.txt")
         self.level = Level(level_map, TILE_SIZE)
 
         # Создаём игрока
