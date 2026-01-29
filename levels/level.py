@@ -11,6 +11,8 @@ class Level:
         self.tile_size = tile_size
         self.platforms = []
         self.ladders = []
+        self.breakable = []
+        self.moving = []
         self.door = None
         self.exit_rect = None
         self.lever = None
@@ -48,9 +50,20 @@ class Level:
                     )
                 elif char == "S":
                     self.lever = Lever(x, y + tile_size // 2, tile_size)
+                elif char == "B":
+                    self.breakable.append(pygame.Rect(x, y, tile_size, tile_size))
+                elif char == "M":
+                    self.moving.append({
+                        "rect": pygame.Rect(x, y, tile_size, tile_size),
+                        "dir": 1
+                    })
+
     def update(self):
-        if self.door:
-            self.door.update()
+        # движущиеся платформы
+        for p in self.moving:
+            p["rect"].x += p["dir"] * 2
+            if p["rect"].left < 0 or p["rect"].right > 2000:
+                p["dir"] *= -1
     def draw(self, screen, camera_x, camera_y):
         #  фон пещеры
         bg_x = -camera_x * 0.3
