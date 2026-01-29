@@ -38,7 +38,7 @@ class Game:
         # Генерация объектов уровня
         self.spikes = []
         self.treasures = []
-      #  self.ladders = []
+        self.ladders = []
 
         for y, row in enumerate(level_map):
             for x, cell in enumerate(row):
@@ -49,8 +49,8 @@ class Game:
                     self.spikes.append(pygame.Rect(world_x, world_y + TILE_SIZE - 5, TILE_SIZE, 5))
                 elif cell == "T":
                     self.treasures.append(pygame.Rect(world_x + 14, world_y + 14, 20, 20))
-             #   elif cell == "L":
-             #       self.ladders.append(pygame.Rect(world_x, world_y, TILE_SIZE, TILE_SIZE))
+                elif cell == "L":
+                    self.ladders.append(pygame.Rect(world_x, world_y, TILE_SIZE, TILE_SIZE))
 
     def run(self):
         while self.running:

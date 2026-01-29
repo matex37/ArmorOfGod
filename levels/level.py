@@ -59,6 +59,8 @@ class Level:
                     })
 
     def update(self):
+        if self.door:
+            self.door.update()
         # движущиеся платформы
         for p in self.moving:
             p["rect"].x += p["dir"] * 2
