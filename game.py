@@ -4,11 +4,13 @@ from settings import *
 from entities.player import Player
 from levels.loader import load_level
 from levels.level import Level
+from levels.levels_list import LEVEL_FILES  # список уровней
+
 TILE_SIZE = 48
-# Загружаем уровень
-level_map = load_level("levels/maps/level_01.txt")
-# Загружаем лестниц
-ladder = pygame.image.load("assets/tiles/ladder/ladder_01.png")
+
+# Загружаем изображение лестницы
+ladder_img = pygame.image.load("assets/tiles/ladder/ladder_01.png")
+
 class Game:
     def __init__(self):
         pygame.init()
@@ -23,22 +25,36 @@ class Game:
         self.camera_y = 0
         self.level_completed = False
 
-        # Загружаем уровень
-        self.level = Level(level_map, TILE_SIZE)
+        # Список уровней
+        self.level_files = LEVEL_FILES
+        self.level_index = 0
 
-        # Загружаем картинку лестницы
-        self.ladder_img = ladder.convert_alpha()
-        self.ladder_img = pygame.transform.scale(
-            self.ladder_img, (TILE_SIZE, TILE_SIZE)
-        )
         # Создаём игрока
-        start_x, start_y = self.level.player_start
-        self.player = Player(start_x, start_y)
+        self.player = Player(0, 0)
 
-        # Генерация объектов уровня
+        # Лестница
+        self.ladder_img = ladder_img.convert_alpha()
+        self.ladder_img = pygame.transform.scale(self.ladder_img, (TILE_SIZE, TILE_SIZE))
+
+        # Загрузка первого уровня
+        self.load_level()
+
+    # ------------------ Загрузка и генерация уровня ------------------ #
+    def load_level(self):
+        """Загружаем карту уровня и создаём объекты"""
+        level_map = load_level(self.level_files[self.level_index])
+        self.level = Level(level_map, TILE_SIZE)
+        self.player.rect.topleft = self.level.player_start
+        self.generate_level_objects()
+
+    def generate_level_objects(self):
+        """Создание шипов, сокровищ и лестниц по карте уровня"""
         self.spikes = []
         self.treasures = []
         self.ladders = []
+
+        # В твоём Level атрибут с картой называется level_map
+        level_map = self.level.level_map
 
         for y, row in enumerate(level_map):
             for x, cell in enumerate(row):
@@ -52,6 +68,17 @@ class Game:
                 elif cell == "L":
                     self.ladders.append(pygame.Rect(world_x, world_y, TILE_SIZE, TILE_SIZE))
 
+    def next_level(self):
+        self.level_index += 1
+        if self.level_index >= len(self.level_files):
+            print("GAME COMPLETE")
+            self.running = False
+            return
+        self.load_level()
+        self.level_completed = False
+        self.score = 0
+
+    # ------------------ Главный цикл ------------------ #
     def run(self):
         while self.running:
             self.handle_events()
@@ -101,14 +128,24 @@ class Game:
         self.check_death()
         self.check_treasure()
         self.check_door()
-        platforms = (
-                self.level.platforms +
-                self.level.breakable +
-                [p["rect"] for p in self.level.moving]
-        )
+
+        # Разрушаемые платформы
         for b in self.level.breakable[:]:
-            if self.player.rect.bottom == b.top and self.player.velocity_y > 0:
-                self.level.breakable.remove(b)
+            if self.player.rect.colliderect(b):
+                if self.player.velocity_y > 0 and self.player.rect.bottom - self.player.velocity_y <= b.top:
+                    self.player.rect.bottom = b.top
+                    self.player.velocity_y = 0
+                    self.player.on_ground = True
+                    # Разрушаем плиту после приземления
+                    self.level.breakable.remove(b)
+
+        # Проверка выхода
+        if (
+            self.level.door
+            and self.level.door.state == "OPEN"
+            and self.player.rect.colliderect(self.level.exit_rect)
+        ):
+            self.next_level()
 
     def check_door(self):
         if self.level.door and self.player.rect.colliderect(self.level.door.rect):
@@ -156,7 +193,7 @@ class Game:
         self.screen.blit(start, (WIDTH // 2 - start.get_width() // 2, 260))
 
     def draw_game(self):
-        # Сначала рисуем уровень
+        # Рисуем уровень
         self.level.draw(self.screen, self.camera_x, self.camera_y)
 
         # Рисуем сокровища
@@ -172,14 +209,15 @@ class Game:
             rect = self.apply_camera(ladder)
             self.screen.blit(self.ladder_img, (rect.x, rect.y))
 
-        # Потом рисуем игрока поверх лестницы
+        # Рисуем игрока поверх лестниц
         self.player.draw(self.screen, self.camera_x, self.camera_y)
 
-        # ломаемые
+        # Разрушаемые платформы
         for b in self.level.breakable:
-            pygame.draw.rect(self.screen, (160, 120, 80), self.apply_camera(b))
+            rect = self.apply_camera(b)
+            self.screen.blit(self.level.breakable_image, (rect.x, rect.y))
 
-        # движущиеся
+        # Движущиеся платформы
         for p in self.level.moving:
             pygame.draw.rect(self.screen, (120, 160, 200), self.apply_camera(p["rect"]))
 

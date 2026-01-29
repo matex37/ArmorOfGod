@@ -3,12 +3,14 @@ from entities.door import Door
 from entities.lever import Lever
 #images
 wall_image = pygame.image.load("assets/tiles/rock/wall.png")
+wall_break = pygame.image.load("assets/tiles/rock/wall_break.png")
 cave_bg = pygame.image.load("assets/backgrounds/cave/cave_bg.png")
 
 
 class Level:
     def __init__(self, level_map, tile_size):
         self.tile_size = tile_size
+        self.level_map = level_map
         self.platforms = []
         self.ladders = []
         self.breakable = []
@@ -21,6 +23,11 @@ class Level:
         self.wall_image = wall_image.convert_alpha()
         self.wall_image = pygame.transform.scale(
             self.wall_image, (tile_size, tile_size)
+        )
+        # разрушаемая плитка
+        self.breakable_image = wall_break.convert_alpha()
+        self.breakable_image = pygame.transform.scale(
+            self.breakable_image, (tile_size, tile_size)
         )
         # фон пещеры
         self.background = cave_bg.convert()
