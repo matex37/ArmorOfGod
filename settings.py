@@ -1,5 +1,5 @@
-WIDTH = 960
-HEIGHT = 540
+WIDTH = 1720
+HEIGHT = 900
 FPS = 60
 
 TITLE = "Armor of God"

@@ -40,7 +40,7 @@ class Player:
         for file in sorted(os.listdir(folder)):
             if file.endswith(".png"):
                 img = pygame.image.load(os.path.join(folder, file)).convert_alpha()
-                img = pygame.transform.scale(img, (35, 55))
+                img = pygame.transform.scale(img, (45, 60))
                 images.append(img)
         return images
 
