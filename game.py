@@ -124,20 +124,28 @@ class Game:
     def update(self):
         self.player.update(self.level.platforms, self.level.ladders)
         self.level.update()
+        self.level.player_rect = self.player.rect
         self.update_camera()
         self.check_death()
         self.check_treasure()
         self.check_door()
 
-        # Разрушаемые платформы
-        for b in self.level.breakable[:]:
+        # Разрушаемые платформы (таймер)
+        for b in self.level.breakable:
             if self.player.rect.colliderect(b):
                 if self.player.velocity_y > 0 and self.player.rect.bottom - self.player.velocity_y <= b.top:
                     self.player.rect.bottom = b.top
                     self.player.velocity_y = 0
                     self.player.on_ground = True
-                    # Разрушаем плиту после приземления
-                    self.level.breakable.remove(b)
+
+                    # ⏱ запуск таймера ОДИН раз
+                    bid = id(b)
+                    now = pygame.time.get_ticks()
+                    if bid not in self.level.break_timers:
+                        self.level.break_timers[bid] = now
+                    else:
+                        self.level.break_timers[bid] += 500
+
 
         # Проверка выхода
         if (

@@ -14,6 +14,8 @@ class Level:
         self.platforms = []
         self.ladders = []
         self.breakable = []
+        self.break_timers = {}
+        self.break_pending = set()
         self.moving = []
         self.door = None
         self.exit_rect = None
@@ -73,6 +75,21 @@ class Level:
             p["rect"].x += p["dir"] * 2
             if p["rect"].left < 0 or p["rect"].right > 2000:
                 p["dir"] *= -1
+        #  Разрушение по таймеру
+        now = pygame.time.get_ticks()
+        for b in self.breakable[:]:
+            bid = id(b)
+            if bid in self.break_timers:
+                if now - self.break_timers[bid] >= 10000:
+                    # сначала помечаем на удаление
+                    self.break_pending.add(bid)
+        # Удаляем ТОЛЬКО то, что было помечено кадр назад
+        for b in self.breakable[:]:
+            bid = id(b)
+            if bid in self.break_pending:
+                self.breakable.remove(b)
+                self.break_timers.pop(bid, None)
+                self.break_pending.remove(bid)
     def draw(self, screen, camera_x, camera_y):
         #  фон пещеры
         bg_x = -camera_x * 0.3
