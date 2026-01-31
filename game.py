@@ -10,6 +10,7 @@ TILE_SIZE = 48
 
 # Загружаем изображение лестницы
 ladder_img = pygame.image.load("assets/tiles/ladder/ladder_01.png")
+spike_image = pygame.image.load("assets/tiles/spikes/spike.png")
 
 class Game:
     def __init__(self):
@@ -35,6 +36,11 @@ class Game:
         # Лестница
         self.ladder_img = ladder_img.convert_alpha()
         self.ladder_img = pygame.transform.scale(self.ladder_img, (TILE_SIZE, TILE_SIZE))
+
+        # шипы
+        self.spike_img = spike_image.convert_alpha()
+        self.spike_img = pygame.transform.scale(self.spike_img, (TILE_SIZE, TILE_SIZE))
+
 
         # Загрузка первого уровня
         self.load_level()
@@ -210,7 +216,11 @@ class Game:
 
         # Рисуем шипы
         for spike in self.spikes:
-            pygame.draw.rect(self.screen, (255, 255, 255), self.apply_camera(spike))
+            r = self.apply_camera(spike)
+            self.screen.blit(
+                self.spike_img,
+                (r.x, r.y - TILE_SIZE + 5)
+            )
 
         # Рисуем лестницы
         for ladder in self.ladders:
