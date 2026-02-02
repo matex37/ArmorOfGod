@@ -1,6 +1,7 @@
 import pygame
 from entities.door import Door
 from entities.lever import Lever
+from entities.enemy import Enemy
 #images
 wall_image = pygame.image.load("assets/tiles/rock/wall.png")
 wall_break = pygame.image.load("assets/tiles/rock/wall_break.png")
@@ -21,6 +22,7 @@ class Level:
         self.exit_rect = None
         self.lever = None
         self.player_start = (0, 0)
+        self.enemies = []
         # стены пещеры
         self.wall_image = wall_image.convert_alpha()
         self.wall_image = pygame.transform.scale(
@@ -66,6 +68,8 @@ class Level:
                         "rect": pygame.Rect(x, y, tile_size, tile_size),
                         "dir": 1
                     })
+                elif char == "E":
+                    self.enemies.append(Enemy(x, y))
 
     def update(self):
         if self.door:

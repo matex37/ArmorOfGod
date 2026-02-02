@@ -5,12 +5,15 @@ from entities.player import Player
 from levels.loader import load_level
 from levels.level import Level
 from levels.levels_list import LEVEL_FILES  # список уровней
-
+from entities.enemy import Enemy
 TILE_SIZE = 48
 
 # Загружаем изображение лестницы
 ladder_img = pygame.image.load("assets/tiles/ladder/ladder_01.png")
-spike_image = pygame.image.load("assets/tiles/spikes/spike.png")
+SPIKE_RAW_FRAMES = [
+    pygame.image.load(f"assets/tiles/spikes/spike_{i}.png")
+    for i in range(1, 5)
+]
 
 class Game:
     def __init__(self):
@@ -26,6 +29,7 @@ class Game:
         self.camera_y = 0
         self.level_completed = False
 
+
         # Список уровней
         self.level_files = LEVEL_FILES
         self.level_index = 0
@@ -38,8 +42,13 @@ class Game:
         self.ladder_img = pygame.transform.scale(self.ladder_img, (TILE_SIZE, TILE_SIZE))
 
         # шипы
-        self.spike_img = spike_image.convert_alpha()
-        self.spike_img = pygame.transform.scale(self.spike_img, (TILE_SIZE, TILE_SIZE))
+        self.spike_frames = [
+            pygame.transform.scale(img.convert_alpha(), (TILE_SIZE, TILE_SIZE))
+            for img in SPIKE_RAW_FRAMES
+        ]
+
+        self.spike_anim_index = 0
+        self.spike_anim_timer = 0
 
 
         # Загрузка первого уровня
@@ -58,6 +67,7 @@ class Game:
         self.spikes = []
         self.treasures = []
         self.ladders = []
+        self.level.enemies = []  # очищаем список врагов для уровня
 
         # В твоём Level атрибут с картой называется level_map
         level_map = self.level.level_map
@@ -73,6 +83,9 @@ class Game:
                     self.treasures.append(pygame.Rect(world_x + 14, world_y + 14, 20, 20))
                 elif cell == "L":
                     self.ladders.append(pygame.Rect(world_x, world_y, TILE_SIZE, TILE_SIZE))
+                elif cell == "E":  # например, E = Enemy
+                    enemy = Enemy(world_x, world_y)
+                    self.level.enemies.append(enemy)
 
     def next_level(self):
         self.level_index += 1
@@ -135,6 +148,14 @@ class Game:
         self.check_death()
         self.check_treasure()
         self.check_door()
+        #обновляем врагов через список уровня:
+        for enemy in self.level.enemies:
+            enemy.update(self.level.platforms)
+        #анимация шипов
+        self.spike_anim_timer += 1
+        if self.spike_anim_timer >= 8:
+            self.spike_anim_timer = 0
+            self.spike_anim_index = (self.spike_anim_index + 1) % len(self.spike_frames)
 
         # Разрушаемые платформы (таймер)
         for b in self.level.breakable:
@@ -160,6 +181,19 @@ class Game:
             and self.player.rect.colliderect(self.level.exit_rect)
         ):
             self.next_level()
+
+        for enemy in self.level.enemies:
+            enemy.update(self.level.platforms)
+        for enemy in self.level.enemies:
+            if enemy.alive and self.player.rect.colliderect(enemy.rect):
+
+                # прыжок сверху — враг умирает
+                if self.player.velocity_y > 0 and \
+                        self.player.rect.bottom - enemy.rect.top < 20:
+                    enemy.alive = False
+                    self.player.velocity_y = -10
+                else:
+                    self.respawn()
 
     def check_door(self):
         if self.level.door and self.player.rect.colliderect(self.level.door.rect):
@@ -210,17 +244,20 @@ class Game:
         # Рисуем уровень
         self.level.draw(self.screen, self.camera_x, self.camera_y)
 
+        # Рисуем врага
+        for enemy in self.level.enemies:
+            enemy.draw(self.screen, self.camera_x, self.camera_y)
+
         # Рисуем сокровища
         for treasure in self.treasures:
             pygame.draw.rect(self.screen, (255, 215, 0), self.apply_camera(treasure))
 
         # Рисуем шипы
+        frame = self.spike_frames[self.spike_anim_index]
+
         for spike in self.spikes:
             r = self.apply_camera(spike)
-            self.screen.blit(
-                self.spike_img,
-                (r.x, r.y - TILE_SIZE + 5)
-            )
+            self.screen.blit(frame, (r.x, r.y - TILE_SIZE + 5))
 
         # Рисуем лестницы
         for ladder in self.ladders:
@@ -238,6 +275,8 @@ class Game:
         # Движущиеся платформы
         for p in self.level.moving:
             pygame.draw.rect(self.screen, (120, 160, 200), self.apply_camera(p["rect"]))
+
+
 
         # HUD
         self.draw_hud()
