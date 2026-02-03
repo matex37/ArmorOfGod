@@ -150,7 +150,7 @@ class Game:
         self.check_door()
         #обновляем врагов через список уровня:
         for enemy in self.level.enemies:
-            enemy.update(self.level.platforms)
+            enemy.update(self.level.platforms, self.player)
         #анимация шипов
         self.spike_anim_timer += 1
         if self.spike_anim_timer >= 8:
@@ -183,7 +183,7 @@ class Game:
             self.next_level()
 
         for enemy in self.level.enemies:
-            enemy.update(self.level.platforms)
+            enemy.update(self.level.platforms, self.player)
         for enemy in self.level.enemies:
             if enemy.alive and self.player.rect.colliderect(enemy.rect):
 

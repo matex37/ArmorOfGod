@@ -52,34 +52,40 @@ class Enemy(pygame.sprite.Sprite):
             self.velocity_y = 10
         self.rect.y += self.velocity_y
 
-    def move(self, platforms):
-        if not self.on_ground:
-            return
-
-        # двигаем врага
+    def move(self, platforms, player):
+        # двигаем врага по горизонтали всегда
         self.rect.x += self.speed * self.direction
 
-        # создаём "ножку" впереди, чтобы проверить есть ли платформа
-        feet_x = self.rect.centerx + (self.rect.width // 2 + 1) * self.direction
-        feet_y = self.rect.bottom + 1
-        on_platform_ahead = False
-
+        # проверяем, есть ли платформа впереди (чуть ниже ног)
+        feet_x = self.rect.centerx + (self.rect.width // 2) * self.direction
+        feet_y = self.rect.bottom + 5  # смещаем проверку вниз, чтобы точно поймать платформу
         check_rect = pygame.Rect(feet_x, feet_y, 2, 2)
-        for plat in platforms:
-            if check_rect.colliderect(plat):
-                on_platform_ahead = True
-                break
+        on_platform_ahead = any(check_rect.colliderect(p) for p in platforms)
 
-        # проверка стены перед врагом
-        hit_wall = False
-        for plat in platforms:
-            if self.rect.colliderect(plat):
-                hit_wall = True
-                break
+        # проверка стены
+        wall_rect = self.rect.move(self.direction * 2, 0)
+        hit_wall = any(wall_rect.colliderect(p) for p in platforms)
 
-        # если впереди края нет или стена — разворачиваемся
+        # если впереди нет платформы или стена — разворачиваемся
         if not on_platform_ahead or hit_wall:
             self.direction *= -1
+
+        if self.state == "attack":
+            return
+
+        if self.state == "attack" and int(self.frame) == 2:
+            attack_rect = pygame.Rect(
+                self.rect.centerx + self.direction * 40,
+                self.rect.y + 10,
+                40, 40
+            )
+            if attack_rect.colliderect(player.rect):
+                player.take_damage()
+
+        if player.rect.centerx < self.rect.centerx:
+            self.direction = -1
+        else:
+            self.direction = 1
 
     def check_collisions(self, platforms):
         self.on_ground = False
@@ -100,13 +106,18 @@ class Enemy(pygame.sprite.Sprite):
                 self.frame = 0
             self.image = self.animations[self.state][int(self.frame)]
 
-    def update(self, platforms):
+    def update(self, platforms, player):
         if not self.alive:
             return
-
+        dist = abs(player.rect.centerx - self.rect.centerx)
+        ATTACK_RANGE = 20
+        if dist <= ATTACK_RANGE:
+            self.state = "attack"
+        else:
+            self.state = "idle"
         self.apply_gravity()
-        self.move(platforms)
         self.check_collisions(platforms)
+        self.move(platforms, player)
         self.animate()
 
     def draw(self, screen, cam_x, cam_y):
