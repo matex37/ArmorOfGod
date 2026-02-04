@@ -148,6 +148,8 @@ class Game:
         self.check_death()
         self.check_treasure()
         self.check_door()
+
+
         #обновляем врагов через список уровня:
         for enemy in self.level.enemies:
             enemy.update(self.level.platforms, self.player)
