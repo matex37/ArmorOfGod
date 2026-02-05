@@ -149,10 +149,17 @@ class Game:
         self.check_treasure()
         self.check_door()
 
-
         #обновляем врагов через список уровня:
         for enemy in self.level.enemies:
             enemy.update(self.level.platforms, self.player)
+
+        attack_rect = self.player.get_attack_rect()
+
+        if attack_rect:
+            for enemy in self.level.enemies:
+                if enemy.alive and attack_rect.colliderect(enemy.rect):
+                    enemy.alive = False
+
         #анимация шипов
         self.spike_anim_timer += 1
         if self.spike_anim_timer >= 8:
@@ -277,6 +284,15 @@ class Game:
         # Движущиеся платформы
         for p in self.level.moving:
             pygame.draw.rect(self.screen, (120, 160, 200), self.apply_camera(p["rect"]))
+
+        attack_rect = self.player.get_attack_rect()
+        if attack_rect:
+            pygame.draw.rect(
+                self.screen,
+                (255, 255, 0),
+                self.apply_camera(attack_rect),
+                2
+            )
 
 
 

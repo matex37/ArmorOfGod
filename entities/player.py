@@ -25,6 +25,10 @@ class Player:
         self.anim_frame = 0
         self.anim_speed = 0.15
 
+        self.attacking = False
+        self.attack_timer = 0
+        self.attack_cooldown = 200
+
         self.animations = {
             "idle": self.load_images("assets/player/idle"),
             "run": self.load_images("assets/player/run"),
@@ -123,6 +127,15 @@ class Player:
 
     # ---------- UPDATE ----------
     def update(self, platforms, ladders):
+        keys = pygame.key.get_pressed()
+        now = pygame.time.get_ticks()
+
+        if keys[pygame.K_LCTRL] and not self.attacking:
+            self.attacking = True
+            self.attack_timer = now
+
+        if self.attacking and now - self.attack_timer > self.attack_cooldown:
+            self.attacking = False
         self.handle_input()
         self.handle_ladder(ladders)
         self.move_x(platforms)
@@ -171,3 +184,22 @@ class Player:
             screen.blit(img, (x, y))
         else:
             pygame.draw.rect(screen, self.color, (x, y, self.rect.width, self.rect.height))
+
+    def get_attack_rect(self):
+        if not self.attacking:
+            return None
+
+        if self.facing == "right":
+            return pygame.Rect(
+                self.rect.right,
+                self.rect.y + 10,
+                35,
+                self.rect.height - 20
+            )
+        else:
+            return pygame.Rect(
+                self.rect.left - 35,
+                self.rect.y + 10,
+                35,
+                self.rect.height - 20
+            )
