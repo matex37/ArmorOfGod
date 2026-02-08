@@ -34,6 +34,12 @@ class Enemy(pygame.sprite.Sprite):
 
         self.rect = self.image.get_rect(topleft=(x, y))
 
+        self.hp = 3
+        self.max_hp = 3
+        self.hp = self.max_hp
+        self.hit_cooldown = 300  # мс
+        self.last_hit_time = 0
+
     def load_images(self, folder):
         images = []
         if not os.path.exists(folder):
@@ -119,6 +125,20 @@ class Enemy(pygame.sprite.Sprite):
         self.check_collisions(platforms)
         self.move(platforms, player)
         self.animate()
+
+    def take_damage(self, amount=1):
+        now = pygame.time.get_ticks()
+
+        # защита от таяния
+        if now - self.last_hit_time < self.hit_cooldown:
+            return
+
+        self.last_hit_time = now
+        self.hp -= amount
+        print("ENEMY HP:", self.hp)
+
+        if self.hp <= 0:
+            self.alive = False
 
     def draw(self, screen, cam_x, cam_y):
         if self.alive:

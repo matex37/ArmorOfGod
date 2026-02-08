@@ -25,9 +25,17 @@ class Player:
         self.anim_frame = 0
         self.anim_speed = 0.15
 
-        self.attacking = False
+        self.attacking = True
+        self.attack_hit = False
+        
+        self.attack_rect = None
         self.attack_timer = 0
-        self.attack_cooldown = 200
+        self.attack_duration = 150
+        self.attack_cooldown = 300
+        self.attacking = False
+        self.attack_hit = False
+
+
 
         self.animations = {
             "idle": self.load_images("assets/player/idle"),
@@ -137,12 +145,17 @@ class Player:
         if self.attacking and now - self.attack_timer > self.attack_cooldown:
             self.attacking = False
         self.handle_input()
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LCTRL] and not self.attacking:
+            self.attacking = True
+            self.attack_timer = pygame.time.get_ticks()
         self.handle_ladder(ladders)
         self.move_x(platforms)
         self.apply_gravity()
         self.move_y(platforms)
         self.update_state()
         self.update_animation()
+        self.update_attack()
 
     # ---------- STATE ----------
     def update_state(self):
@@ -203,3 +216,23 @@ class Player:
                 35,
                 self.rect.height - 20
             )
+
+    def update_attack(self):
+        if not self.attacking:
+            self.attack_rect = None
+            return
+
+        now = pygame.time.get_ticks()
+        if now - self.attack_timer > self.attack_duration:
+            self.attacking = False
+            self.attack_rect = None
+            return
+
+        offset = 40 if self.facing == "right" else -40
+        self.attack_rect = pygame.Rect(
+            self.rect.centerx + offset,
+            self.rect.y + 10,
+            40,
+            40
+        )
+

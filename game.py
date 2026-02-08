@@ -142,12 +142,20 @@ class Game:
     # ------------------ Логика игры ------------------ #
     def update(self):
         self.player.update(self.level.platforms, self.level.ladders)
+        for enemy in self.level.enemies:
+            if enemy.alive and self.player.attacking and self.player.attack_rect:
+                if self.player.attack_rect.colliderect(enemy.rect):
+                    enemy.take_damage(1)
+                    print("HIT")
+                    enemy.take_damage(1)
+                    self.player.attacking = False
         self.level.update()
         self.level.player_rect = self.player.rect
         self.update_camera()
         self.check_death()
         self.check_treasure()
         self.check_door()
+
 
         #обновляем врагов через список уровня:
         for enemy in self.level.enemies:
@@ -302,3 +310,4 @@ class Game:
     def draw_hud(self):
         text = self.font.render(f"Treasure: {self.score}", True, (255, 255, 255))
         self.screen.blit(text, (10, 10))
+
