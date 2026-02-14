@@ -297,15 +297,6 @@ class Game:
         for p in self.level.moving:
             pygame.draw.rect(self.screen, (120, 160, 200), self.apply_camera(p["rect"]))
 
-        # attack_rect = self.player.get_attack_rect()
-        # if attack_rect:
-        #     pygame.draw.rect(
-        #         self.screen,
-        #         (255, 255, 0),
-        #         self.apply_camera(attack_rect),
-        #         2
-        #     )
-
 
 
         # HUD

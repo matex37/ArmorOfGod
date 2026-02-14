@@ -158,7 +158,7 @@ class Player:
         self.move_y(platforms)
         self.update_state()
         self.update_animation()
-        self.update_attack()
+
 
     # ---------- STATE ----------
     def update_state(self):
@@ -194,8 +194,19 @@ class Player:
     # ---------- ANIMATION ----------
     def update_animation(self):
         frames = self.animations.get(self.state, [])
-        if frames:
-            self.anim_frame = (self.anim_frame + self.anim_speed) % len(frames)
+        if not frames:
+            return
+
+        self.anim_frame += self.anim_speed
+
+        # Если это атака — не зацикливаем
+        if self.state == "attack":
+            if self.anim_frame >= len(frames):
+                self.anim_frame = 0
+                self.attacking = False
+                self.state = "idle"
+        else:
+            self.anim_frame %= len(frames)
 
     # ---------- DRAW ----------
     def draw(self, screen, camera_x, camera_y):
@@ -214,37 +225,14 @@ class Player:
         if not self.attacking:
             return None
 
-        if self.facing == "right":
-            return pygame.Rect(
-                self.rect.right,
-                self.rect.y + 10,
-                35,
-                self.rect.height - 20
-            )
-        else:
-            return pygame.Rect(
-                self.rect.left - 35,
-                self.rect.y + 10,
-                35,
-                self.rect.height - 20
-            )
-
-    def update_attack(self):
-        if not self.attacking:
-            self.attack_rect = None
-            return
-
-        now = pygame.time.get_ticks()
-        if now - self.attack_timer > self.attack_duration:
-            self.attacking = False
-            self.attack_rect = None
-            return
-
         offset = 40 if self.facing == "right" else -40
-        self.attack_rect = pygame.Rect(
+
+        return pygame.Rect(
             self.rect.centerx + offset,
             self.rect.y + 10,
             40,
-            40
+            self.rect.height - 20
         )
+
+
 
