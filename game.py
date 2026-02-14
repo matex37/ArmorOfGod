@@ -54,6 +54,8 @@ class Game:
         # Загрузка первого уровня
         self.load_level()
 
+        self.hit_stop_timer = 0
+
     # ------------------ Загрузка и генерация уровня ------------------ #
     def load_level(self):
         """Загружаем карту уровня и создаём объекты"""
@@ -143,6 +145,11 @@ class Game:
     def update(self):
         self.player.update(self.level.platforms, self.level.ladders)
         # ===== АТАКА ЧЕРЕЗ КАДР АНИМАЦИИ =====
+        if self.hit_stop_timer:
+            if pygame.time.get_ticks() - self.hit_stop_timer < 70:
+                return
+            else:
+                self.hit_stop_timer = 0
         if self.player.attacking and not self.player.attack_done:
 
             frame_index = int(self.player.anim_frame)
@@ -156,7 +163,7 @@ class Game:
                     for enemy in self.level.enemies:
                         if enemy.alive and hitbox.colliderect(enemy.rect):
                             enemy.take_damage(1)
-
+                            self.hit_stop_timer = pygame.time.get_ticks()
                 # чтобы удар не повторялся в этом же кадре
                 self.player.attack_done = True
         self.level.update()

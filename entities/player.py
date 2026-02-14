@@ -139,7 +139,7 @@ class Player:
         keys = pygame.key.get_pressed()
         now = pygame.time.get_ticks()
 
-        if keys[pygame.K_LCTRL] and not self.attacking:
+        if keys[pygame.K_RALT] and not self.attacking:
             self.attack_done = False
             self.attacking = True
             self.attack_timer = now
@@ -148,7 +148,7 @@ class Player:
             self.attacking = False
         self.handle_input()
         keys = pygame.key.get_pressed()
-        if keys[pygame.K_LCTRL] and not self.attacking:
+        if keys[pygame.K_RALT] and not self.attacking:
             self.attack_done = False
             self.attacking = True
             self.attack_timer = pygame.time.get_ticks()
@@ -223,7 +223,9 @@ class Player:
 
     def get_attack_rect(self):
         if not self.attacking:
-            return None
+            self.attacking = True
+            self.anim_frame = 0
+            self.attack_done = False
 
         offset = 40 if self.facing == "right" else -40
 

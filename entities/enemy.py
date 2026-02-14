@@ -48,6 +48,7 @@ class Enemy(pygame.sprite.Sprite):
         self.DEATH_DELAY = 300  # миллисекунды
 
         self.knockback = 0
+        self.hit_flash_timer = 0
 
     def load_images(self, folder):
         images = []
@@ -150,6 +151,7 @@ class Enemy(pygame.sprite.Sprite):
 
         # 💥 отбрасывание
         self.knockback = -10 if self.direction == 1 else 10
+        self.hit_flash_timer = pygame.time.get_ticks()
 
         if self.hp <= 0:
             self.dying = True
