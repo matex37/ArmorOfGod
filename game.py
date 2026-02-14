@@ -142,13 +142,23 @@ class Game:
     # ------------------ Логика игры ------------------ #
     def update(self):
         self.player.update(self.level.platforms, self.level.ladders)
-        for enemy in self.level.enemies:
-            if enemy.alive and self.player.attacking and self.player.attack_rect:
-                if self.player.attack_rect.colliderect(enemy.rect):
-                    enemy.take_damage(1)
-                    print("HIT")
-                    enemy.take_damage(1)
-                    self.player.attacking = False
+        # ===== АТАКА ЧЕРЕЗ КАДР АНИМАЦИИ =====
+        if self.player.attacking and not self.player.attack_done:
+
+            frame_index = int(self.player.anim_frame)
+
+            # удар происходит на 2 кадре анимации
+            if frame_index == 1:
+
+                hitbox = self.player.get_attack_rect()
+
+                if hitbox:
+                    for enemy in self.level.enemies:
+                        if enemy.alive and hitbox.colliderect(enemy.rect):
+                            enemy.take_damage(1)
+
+                # чтобы удар не повторялся в этом же кадре
+                self.player.attack_done = True
         self.level.update()
         self.level.player_rect = self.player.rect
         self.update_camera()
@@ -161,12 +171,6 @@ class Game:
         for enemy in self.level.enemies:
             enemy.update(self.level.platforms, self.player)
 
-        attack_rect = self.player.get_attack_rect()
-
-        if attack_rect:
-            for enemy in self.level.enemies:
-                if enemy.alive and attack_rect.colliderect(enemy.rect):
-                    enemy.alive = False
 
         #анимация шипов
         self.spike_anim_timer += 1
@@ -293,14 +297,14 @@ class Game:
         for p in self.level.moving:
             pygame.draw.rect(self.screen, (120, 160, 200), self.apply_camera(p["rect"]))
 
-        attack_rect = self.player.get_attack_rect()
-        if attack_rect:
-            pygame.draw.rect(
-                self.screen,
-                (255, 255, 0),
-                self.apply_camera(attack_rect),
-                2
-            )
+        # attack_rect = self.player.get_attack_rect()
+        # if attack_rect:
+        #     pygame.draw.rect(
+        #         self.screen,
+        #         (255, 255, 0),
+        #         self.apply_camera(attack_rect),
+        #         2
+        #     )
 
 
 

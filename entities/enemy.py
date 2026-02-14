@@ -35,10 +35,19 @@ class Enemy(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(topleft=(x, y))
 
         self.hp = 3
+        self.alive = True
+        self.dying = False
+        self.knockback = 0
         self.max_hp = 3
         self.hp = self.max_hp
         self.hit_cooldown = 300  # мс
         self.last_hit_time = 0
+
+        self.dying = False
+        self.death_timer = 0
+        self.DEATH_DELAY = 300  # миллисекунды
+
+        self.knockback = 0
 
     def load_images(self, folder):
         images = []
@@ -115,30 +124,35 @@ class Enemy(pygame.sprite.Sprite):
     def update(self, platforms, player):
         if not self.alive:
             return
-        dist = abs(player.rect.centerx - self.rect.centerx)
-        ATTACK_RANGE = 20
-        if dist <= ATTACK_RANGE:
-            self.state = "attack"
-        else:
-            self.state = "idle"
+
+        # 💥 отбрасывание
+        if self.knockback != 0:
+            self.rect.x += self.knockback
+            self.knockback *= 0.8
+            if abs(self.knockback) < 0.5:
+                self.knockback = 0
+
+        if self.dying:
+            self.alive = False
+            return
+
         self.apply_gravity()
         self.check_collisions(platforms)
         self.move(platforms, player)
         self.animate()
 
-    def take_damage(self, amount=1):
-        now = pygame.time.get_ticks()
-
-        # защита от таяния
-        if now - self.last_hit_time < self.hit_cooldown:
+    def take_damage(self, amount):
+        if not self.alive or self.dying:
             return
 
-        self.last_hit_time = now
         self.hp -= amount
         print("ENEMY HP:", self.hp)
 
+        # 💥 отбрасывание
+        self.knockback = -10 if self.direction == 1 else 10
+
         if self.hp <= 0:
-            self.alive = False
+            self.dying = True
 
     def draw(self, screen, cam_x, cam_y):
         if self.alive:

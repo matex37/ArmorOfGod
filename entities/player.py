@@ -34,6 +34,7 @@ class Player:
         self.attack_cooldown = 300
         self.attacking = False
         self.attack_hit = False
+        self.attack_done = False
 
 
 
@@ -139,6 +140,7 @@ class Player:
         now = pygame.time.get_ticks()
 
         if keys[pygame.K_LCTRL] and not self.attacking:
+            self.attack_done = False
             self.attacking = True
             self.attack_timer = now
 
@@ -147,6 +149,7 @@ class Player:
         self.handle_input()
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LCTRL] and not self.attacking:
+            self.attack_done = False
             self.attacking = True
             self.attack_timer = pygame.time.get_ticks()
         self.handle_ladder(ladders)
@@ -161,20 +164,29 @@ class Player:
     def update_state(self):
         keys = pygame.key.get_pressed()
 
-        if self.on_ladder:
+        # ===== АТАКА ИМЕЕТ ПРИОРИТЕТ =====
+        if self.attacking:
+            self.state = "attack"
+
+        elif self.on_ladder:
             self.state = "idle"
+
         elif not self.on_ground:
             self.state = "jump"
+
         elif keys[pygame.K_LEFT] or keys[pygame.K_RIGHT]:
             self.state = "run"
+
         else:
             self.state = "idle"
 
+        # направление
         if keys[pygame.K_LEFT]:
             self.facing = "left"
         elif keys[pygame.K_RIGHT]:
             self.facing = "right"
 
+        # сброс анимации при смене состояния
         if self.state != self.prev_state:
             self.anim_frame = 0
             self.prev_state = self.state
