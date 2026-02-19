@@ -143,18 +143,23 @@ class Game:
 
     # ------------------ Логика игры ------------------ #
     def update(self):
+
+        # --- Обновление игрока ---
         self.player.update(self.level.platforms, self.level.ladders)
-        # ===== АТАКА ЧЕРЕЗ КАДР АНИМАЦИИ =====
+
+        # ===== HIT STOP =====
         if self.hit_stop_timer:
             if pygame.time.get_ticks() - self.hit_stop_timer < 70:
                 return
             else:
                 self.hit_stop_timer = 0
+
+        # ===== АТАКА ИГРОКА (через кадр анимации) =====
         if self.player.attacking and not self.player.attack_done:
 
             frame_index = int(self.player.anim_frame)
 
-            # удар происходит на 2 кадре анимации
+            # удар происходит на 2 кадре
             if frame_index == 1:
 
                 hitbox = self.player.get_attack_rect()
@@ -164,64 +169,70 @@ class Game:
                         if enemy.alive and hitbox.colliderect(enemy.rect):
                             enemy.take_damage(1)
                             self.hit_stop_timer = pygame.time.get_ticks()
-                # чтобы удар не повторялся в этом же кадре
+
                 self.player.attack_done = True
+
+        # --- Обновление уровня ---
         self.level.update()
         self.level.player_rect = self.player.rect
-        self.update_camera()
-        self.check_death()
-        self.check_treasure()
-        self.check_door()
 
-
-        #обновляем врагов через список уровня:
+        # --- Обновление врагов (ОДИН РАЗ!) ---
         for enemy in self.level.enemies:
             enemy.update(self.level.platforms, self.player)
 
-
-        #анимация шипов
-        self.spike_anim_timer += 1
-        if self.spike_anim_timer >= 8:
-            self.spike_anim_timer = 0
-            self.spike_anim_index = (self.spike_anim_index + 1) % len(self.spike_frames)
-
-        # Разрушаемые платформы (таймер)
-        for b in self.level.breakable:
-            if self.player.rect.colliderect(b):
-                if self.player.velocity_y > 0 and self.player.rect.bottom - self.player.velocity_y <= b.top:
-                    self.player.rect.bottom = b.top
-                    self.player.velocity_y = 0
-                    self.player.on_ground = True
-
-                    # ⏱ запуск таймера ОДИН раз
-                    bid = id(b)
-                    now = pygame.time.get_ticks()
-                    if bid not in self.level.break_timers:
-                        self.level.break_timers[bid] = now
-                    else:
-                        self.level.break_timers[bid] += 500
-
-
-        # Проверка выхода
-        if (
-            self.level.door
-            and self.level.door.state == "OPEN"
-            and self.player.rect.colliderect(self.level.exit_rect)
-        ):
-            self.next_level()
-
-        for enemy in self.level.enemies:
-            enemy.update(self.level.platforms, self.player)
+        # --- Коллизия игрока с врагом ---
         for enemy in self.level.enemies:
             if enemy.alive and self.player.rect.colliderect(enemy.rect):
 
                 # прыжок сверху — враг умирает
                 if self.player.velocity_y > 0 and \
                         self.player.rect.bottom - enemy.rect.top < 20:
+
                     enemy.alive = False
                     self.player.velocity_y = -10
+
                 else:
                     self.respawn()
+
+        # --- Камера ---
+        self.update_camera()
+
+        # --- Проверки ---
+        self.check_death()
+        self.check_treasure()
+        self.check_door()
+
+        # --- Анимация шипов ---
+        self.spike_anim_timer += 1
+        if self.spike_anim_timer >= 8:
+            self.spike_anim_timer = 0
+            self.spike_anim_index = (self.spike_anim_index + 1) % len(self.spike_frames)
+
+        # --- Разрушаемые платформы ---
+        for b in self.level.breakable:
+            if self.player.rect.colliderect(b):
+                if self.player.velocity_y > 0 and \
+                        self.player.rect.bottom - self.player.velocity_y <= b.top:
+
+                    self.player.rect.bottom = b.top
+                    self.player.velocity_y = 0
+                    self.player.on_ground = True
+
+                    bid = id(b)
+                    now = pygame.time.get_ticks()
+
+                    if bid not in self.level.break_timers:
+                        self.level.break_timers[bid] = now
+                    else:
+                        self.level.break_timers[bid] += 500
+
+        # --- Проверка выхода ---
+        if (
+                self.level.door
+                and self.level.door.state == "OPEN"
+                and self.player.rect.colliderect(self.level.exit_rect)
+        ):
+            self.next_level()
 
     def check_door(self):
         if self.level.door and self.player.rect.colliderect(self.level.door.rect):
