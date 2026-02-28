@@ -155,9 +155,9 @@ class Game:
                 self.hit_stop_timer = 0
 
         # ===== АТАКА ИГРОКА (через кадр анимации) =====
-        if self.player.attacking and not self.player.attack_done:
+        if self.player.attack.attacking and not self.player.attack.attack_done:
 
-            frame_index = int(self.player.anim_frame)
+            frame_index = int(self.player.animation.anim_frame)
 
             # удар происходит на 2 кадре
             if frame_index == 1:
@@ -170,7 +170,8 @@ class Game:
                             enemy.take_damage(1)
                             self.hit_stop_timer = pygame.time.get_ticks()
 
-                self.player.attack_done = True
+                self.player.attack.attack_done = True
+
 
         # --- Обновление уровня ---
         self.level.update()
